@@ -1,6 +1,9 @@
 package com.shopproject.controller;
 
 import com.shopproject.controller.viewObject.UserVo;
+import com.shopproject.error.BusinessException;
+import com.shopproject.error.EmumBusinessError;
+import com.shopproject.response.CommonReturnType;
 import com.shopproject.service.UserService;
 import com.shopproject.service.model.UserModel;
 import org.springframework.beans.BeanUtils;
@@ -19,11 +22,19 @@ public class UserController
 
     @RequestMapping("/get")
     @ResponseBody
-    public UserVo getUser(@RequestParam(name="id") Integer id)
-    {
+    public CommonReturnType getUser(@RequestParam(name="id") Integer id) throws BusinessException {
         // 调用servece服务获取对应id的用户对象并返回给前端
         UserModel userModel = userService.getUserById(id);
-        return convertFromModel(userModel);
+
+        // 若错误处理
+        if (userModel == null) {
+            throw new BusinessException(EmumBusinessError.USER_NOT_EXIST);
+        }
+
+        // 转换为供前端使用的viewobject
+        UserVo userVo = convertFromModel(userModel);
+
+        return CommonReturnType.create(userVo);
     }
 
     private UserVo convertFromModel(UserModel userModel) {

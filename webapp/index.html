@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+</head>
+<body>
+	<h1>获取otp信息</h1>
+	<p>手机号</p>
+	<input type="text" name="telphone" id="telphone">
+	<button id="get">获取短信</button>
+</body>
+<script>
+	function postTel() {
+		const tel = document.querySelector("#telphone").value;
+		console.log(tel)
+		fetch('http://localhost:8080/user/getotp', {
+			method: 'POST',
+			headers: {
+			    'Content-Type': 'application/x-www-form-urlencoded'
+			},
+			// body: JSON.stringify({
+			// 	telphone: tel
+			// })
+			body: "telphone=" + tel
+		}).then(res => {
+			return res.json();
+		}).then(res => {
+			console.log(res);
+		}).catch(e => {
+			console.warn(e);
+		})
+	}
+	document.querySelector("#get").addEventListener("click", function () {
+		postTel()
+	});
+</script>
+</html>

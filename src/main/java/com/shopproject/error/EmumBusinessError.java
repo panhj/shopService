@@ -3,8 +3,8 @@ package com.shopproject.error;
 public enum EmumBusinessError implements CommonError{
 
     PARAMETER_VALIDATION_ERROR(00001,"param not valid"),
-    USER_NOT_EXIST(10001, "user not exist")
-
+    USER_NOT_EXIST(10001, "user not exist"),
+    UNKNOWEN_ERROR(10000, "未知错误")
     ;
 
     private int errCode;

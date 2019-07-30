@@ -2,16 +2,23 @@ package com.shopproject.controller;
 
 import com.shopproject.controller.viewObject.UserVo;
 import com.shopproject.error.BusinessException;
+import com.shopproject.error.EmumBusinessError;
 import com.shopproject.response.CommonReturnType;
 import com.shopproject.service.UserService;
 import com.shopproject.service.model.UserModel;
+import org.apache.tomcat.util.security.MD5Encoder;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import sun.misc.BASE64Decoder;
+import sun.misc.BASE64Encoder;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Random;
 
 @CrossOrigin(allowCredentials = "true", allowedHeaders = "*")
@@ -25,6 +32,42 @@ public class UserController extends BaseController
     @Autowired
     private HttpServletRequest httpServletRequest;
 
+    // 用户注册接口
+    @RequestMapping(value="/register",method={RequestMethod.POST},consumes={"application/x-www-form-urlencoded"})
+    @ResponseBody
+    public CommonReturnType register(@RequestParam(name="telphone")String telphone,
+                                     @RequestParam(name="otpCode")String otpCode,
+                                     @RequestParam(name="name")String name,
+                                     @RequestParam(name="gender")Byte gender,
+                                     @RequestParam(name="age")Integer age,
+                                     @RequestParam(name="password")String password) throws BusinessException, UnsupportedEncodingException, NoSuchAlgorithmException {
+        // 验证手机号和对应的otpcode符合
+        String inSessionOtpCode = (String)httpServletRequest.getSession().getAttribute(telphone);
+        if(!com.alibaba.druid.util.StringUtils.equals(otpCode, inSessionOtpCode)) {
+            throw new BusinessException(EmumBusinessError.PARAMETER_VALIDATION_ERROR, "短信验证码错误");
+        }
+        // 用户注册流程
+        UserModel userModel = new UserModel();
+        userModel.setName(name);
+        userModel.setGender(gender);
+        userModel.setAge(age);
+        userModel.setTelphone(telphone);
+        userModel.setRegisterMode("byphone");
+        userModel.setEncrptPassword(this.EncodeByMD5(password));
+
+        userService.register(userModel);
+        return CommonReturnType.create(null);
+    }
+    public String EncodeByMD5(String str) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        // 确定计算方法
+        MessageDigest md5 = MessageDigest.getInstance("MD5");
+        BASE64Encoder base64Encoder = new BASE64Encoder();
+        // 加密字符串
+        String newStr = base64Encoder.encode(md5.digest(str.getBytes("utf-8")));
+        return newStr;
+    }
+
+    // 用户获取otp短信
     @RequestMapping(value="/getotp",method={RequestMethod.POST},consumes={"application/x-www-form-urlencoded"})
     @ResponseBody
     public CommonReturnType getOtp(@RequestParam("telphone") String telphone) {
